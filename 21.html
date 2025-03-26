@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Diagram</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.5/js/jsplumb.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.5/css/jsplumbtoolkit-defaults.min.css">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    #toolbox {
+        width: 250px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        float: left;
+        margin-right: 20px;
+    }
+    #canvas-container {
+        width: 800px;
+        height: 600px;
+        border: 2px solid #333;
+        position: relative;
+        overflow: auto;
+        float: left;
+        background-color: #f5f5f5;
+    }
+    #canvas {
+        width: 1600px;
+        height: 1200px;
+        transform-origin: top left;
+        position: relative;
+    }
+    .shape-a {
+        width: 200px;
+        height: 100px;
+        background-color: #bf9000;
+        border: 1px solid #999;
+        position: absolute;
+        cursor: move;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .shape-b {
+        background-color: #669f41;
+        border: 1px solid #6699cc;
+        border-radius: 50%;
+        position: absolute;
+        cursor: move;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+     .shape-c {
+            width: 200px;
+            height: 100px;
+            background-color: #4672c4;
+            border: 1px solid #999;
+            position: absolute;
+            cursor: move;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+    .shape-group {
+        position: absolute;
+    }
+    .toolbox-item {
+        margin: 10px 0;
+        padding: 10px;
+        text-align: center;
+        cursor: grab;
+        display: inline-block;
+        vertical-align: top;
+    }
+    .toolbox-shape-a {
+        width: 200px;
+        height: 100px;
+        margin: 10px auto;
+        background-color: #bf9000;
+        border: 1px solid #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-direction: column;
+        position: relative;
+    }
+    .toolbox-shape-b {
+        width: 30px;
+        height: 30px;
+        margin: 10px auto;
+        background-color: #669f41;
+        border: 1px solid #6699cc;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        }
+        .toolbox-shape-c {
+            width: 200px;
+            height: 100px;
+            margin: 10px auto;
+            background-color: #4672c4;
+            border: 1px solid #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-direction: column;
+            position: relative;
+    }
+    .toolbox-b-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .custom-select-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+    .custom-select {
+        appearance: none;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        color: #333;
+        cursor: pointer;
+        padding: 8px 12px;
+        width: 50%;
+        font-size: 14px;
+        outline: none;
+    }
+    .partner-shape {
+        width: 200px;
+        height: 100px;
+        background-color: #538135;
+        border: 1px solid #999;
+        position: absolute;
+        cursor: move;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .autocustomer-shape {
+        width: 200px;
+        height: 100px;
+        background-color: #a8d08d;
+        border: 1px solid #999;
+        position: absolute;
+        cursor: move;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        }
+        .customer-shape {
+            width: 200px;
+            height: 100px;
+            background-color: #4672c4;
+            border: 1px solid #999;
+            position: absolute;
+            cursor: move;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .user-shape {
+            width: 60px;
+            height: 60px;
+            background-color: #90aadb;
+            border-radius: 50%;
+            position: absolute;
+            cursor: move;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+    }
+    .zoom-controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+    .zoom-controls button {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        cursor: pointer;
+    }
+    .jtk-connector {
+        z-index: 5;
+        stroke: #666;
+        stroke-width: 2px;
+    }
+    .jtk-endpoint {
+        z-index: 6;
+    }
+    .jtk-overlay {
+        z-index: 7;
+        }
+        #toolbox h3 {
+            padding:0;
+            margin:0;
+        }
+        .drop-hover {
+            background-color: #e6f7ff;
+            border: 2px dashed #333;
+    }
+    .no-customers {
+        padding: 10px;
+        background-color: #f8f8f8;
+        border: 1px solid #ddd;
+        text-align: center;
+        margin: 10px 0;
+    }
+</style>
+</head>
+<body>
+    <h1>Flow Diagram Generator</h1>
+
+    <div id="toolbox">
+        <h3>Groups</h3>
+        <div class="toolbox-item" id="shape-a-tool">
+            <div class="toolbox-shape-a">
+                <div class="custom-select-wrapper">
+                    <select id="a-selector" class="custom-select">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Customers</h3>
+        <div id="customer-tool-container">
+            <div class="toolbox-item" id="shape-c-tool">
+                <div class="toolbox-shape-c">
+                    <div class="custom-select-wrapper">
+                        <select id="c-selector" class="custom-select">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Apps</h3>
+        <div class="toolbox-b-container" id="toolbox-b-container">
+            <!-- B shapes will be dynamically generated here -->
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <div class="zoom-controls">
+            <button id="zoom-in">Zoom In</button>
+            <button id="zoom-out">Zoom Out</button>
+        </div>
+        <div id="canvas"></div>
+    </div>
+
+    <script>
+        jQuery(document).ready(function() {
+            let idCounter = 1;
+            let jsPlumbInstance = jsPlumb.getInstance({
+                Container: "canvas",
+                Connector: ["Flowchart", { curviness: 20 }],
+                PaintStyle: { stroke: "#666", strokeWidth: 2 },
+                EndpointStyle: { radius: 5, fill: "#666" },
+                HoverPaintStyle: { stroke: "#333", strokeWidth: 3 },
+                ConnectionOverlays: [
+                    ["Arrow", { 
+                        width: 10, 
+                        length: 10, 
+                        location: 1,
+                        id: "arrow"
+                    }]
+                ]
+            });
+
+            // Track zoom scale
+            let scale = 1;
+
+            var partners = ['P1', 'P2', 'P3'];
+            var partnersAutocustomer = {'P1': 'C1', 'P2': 'C2', 'P3': 'C3'};
+            var partnersAutoUser = {'P1': 'U1', 'P2': 'U2', 'P3': 'U3'};
+            var Bs = {'B1': '10', 'B2': '11', 'B3': '12'};
+            var As = ['Group1', 'Group2', 'Group3', 'Group4'];
+            var Cs = ['Cust1', 'Cust2', 'Cust3'];
+            var custAutoUser = {'Cust1': 'U4', 'Cust2': 'U5', 'Cust3': 'U6'};
+
+            // Populate the dropdown menu with options from the As array
+            var $aSelector = jQuery("#a-selector");
+            As.forEach(function(group) {
+                $aSelector.append(`<option value="${group}">${group}</option>`);
+            });
+
+            // Populate the C dropdown menu
+            var $cSelector = jQuery("#c-selector");
+            Cs.forEach(function(customer) {
+                $cSelector.append(`<option value="${customer}">${customer}</option>`);
+            });
+
+            // Function to update customer toolbox
+            function updateCustomerToolbox() {
+                if ($cSelector.find('option').length === 0) {
+                    jQuery("#customer-tool-container").html('<div class="no-customers">No more customers available</div>');
+                }
+            }
+
+            // Generate toolbox items for B shapes
+            for (let label in Bs) {
+                if (Bs.hasOwnProperty(label)) {
+                    let value = Bs[label];
+                    let $toolboxItem = jQuery(`<div class="toolbox-item" id="shape-b-tool-${label}" data-value="${value}">
+                        <div class="toolbox-shape-b" data-label="${label}">${label}</div>
+                    </div>`);
+                    jQuery("#toolbox-b-container").append($toolboxItem);
+
+                    $toolboxItem.draggable({
+                        helper: "clone",
+                        cursor: "move",
+                        containment: "document",
+                        zIndex: 1000
+                    });
+                }
+            }
+
+            jQuery("#shape-a-tool").draggable({
+                helper: function() {
+                    const selectedLabel = jQuery("#a-selector").val();
+                    return jQuery(`<div class="toolbox-shape-a">${selectedLabel}</div>`);
+                },
+                cursor: "move",
+                containment: "document",
+                zIndex: 1000
+            });
+
+            jQuery("#shape-c-tool").draggable({
+                helper: function() {
+                    const selectedLabel = jQuery("#c-selector").val();
+                    return jQuery(`<div class="toolbox-shape-c">${selectedLabel}</div>`);
+                },
+                cursor: "move",
+                containment: "document",
+                zIndex: 1000
+            });
+
+            // Create partner shapes on the canvas
+            partners.forEach((partner, index) => {
+                const topPosition = 50 + (index * 200);
+                const $partnerShape = jQuery(`<div class="partner-shape" id="partner-${partner}">${partner}</div>`)
+                    .css({
+                        top: topPosition + 'px',
+                        left: '10px'
+                    })
+                    .appendTo("#canvas");
+
+                // Create corresponding autocustomer shapes
+                const autocustomer = partnersAutocustomer[partner];
+                const $autocustomerShape = jQuery(`<div class="autocustomer-shape" id="autocustomer-${autocustomer}">${autocustomer}</div>`)
+                    .css({
+                        top: topPosition + 'px',
+                        left: '310px'
+                    })
+                    .appendTo("#canvas");
+
+                // Connect partner to autocustomer
+                jsPlumbInstance.connect({
+                    source: `partner-${partner}`,
+                    target: `autocustomer-${autocustomer}`,
+                    anchors: ["Continuous", "Continuous"],
+                    endpoint: "Blank",
+                    connector: ["Flowchart"],
+                    paintStyle: { 
+                        stroke: "#666", 
+                        strokeWidth: 2
+                    },
+                    overlays: [
+                        ["Arrow", { 
+                            width: 10, 
+                            length: 10, 
+                            location: 1
+                        }]
+                    ]
+                });
+
+                // Make partner droppable for customer shapes
+                $partnerShape.droppable({
+                    accept: "#shape-c-tool",
+                    hoverClass: "drop-hover",
+                    drop: function(event, ui) {
+                        const selectedLabel = jQuery("#c-selector").val();
+                        const partnerId = jQuery(this).attr("id");
+                        const partner = partnerId.replace("partner-", "");
+                        
+                        // Remove the selected customer from dropdown
+                        $cSelector.find(`option[value="${selectedLabel}"]`).remove();
+                        
+                        // Update customer toolbox
+                        updateCustomerToolbox();
+                        
+                        // Get autocustomer position
+                        const $autocustomer = jQuery(`#autocustomer-${partnersAutocustomer[partner]}`);
+                        const autocustomerTop = parseFloat($autocustomer.css("top"));
+                        const autocustomerLeft = parseFloat($autocustomer.css("left"));
+                        
+                        // Position customer 20px below autocustomer
+                        const customerTop = autocustomerTop + $autocustomer.outerHeight() + 20;
+                        const customerLeft = autocustomerLeft;
+                        
+                        // Create customer shape
+                        const customerId = "customer-" + selectedLabel + "-" + idCounter++;
+                        const $customer = jQuery(`<div class="customer-shape" id="${customerId}">${selectedLabel}</div>`)
+                            .css({
+                                top: customerTop + 'px',
+                                left: customerLeft + 'px'
+                            })
+                            .appendTo("#canvas");
+                            
+                        // Make customer draggable
+                        jsPlumbInstance.draggable($customer, {
+                            containment: "parent",
+                            start: function(e, ui) {
+                                jQuery(this).data('originalLeft', ui.position.left);
+                                jQuery(this).data('originalTop', ui.position.top);
+                                jQuery(this).css('z-index', 1000);
+                            },
+                            drag: function(e, ui) {
+                                const containerOffset = jQuery("#canvas-container").offset();
+                                const mouseX = e.clientX - containerOffset.left;
+                                const mouseY = e.clientY - containerOffset.top;
+                                
+                                ui.position.left = (mouseX - (e.offsetX * scale)) / scale;
+                                ui.position.top = (mouseY - (e.offsetY * scale)) / scale;
+                                jsPlumbInstance.repaintEverything();
+                            }
+                        });
+                        
+                        // Connect partner to customer
+                        jsPlumbInstance.connect({
+                            source: `partner-${partner}`,
+                            target: customerId,
+                            anchors: ["Continuous", "Continuous"],
+                            endpoint: "Blank",
+                            connector: ["Flowchart"],
+                            paintStyle: { 
+                                stroke: "#666", 
+                                strokeWidth: 2
+                            },
+                            overlays: [
+                                ["Arrow", { 
+                                    width: 10, 
+                                    length: 10, 
+                                    location: 1
+                                }]
+                            ]
+                        });
+                        
+                        console.log(`Customer ${selectedLabel} dropped on partner ${partner}`);
+                    }
+                });
+            });
+
+            jQuery("#canvas").droppable({
+                accept: ".toolbox-item",
+                drop: function(event, ui) {
+                    const offset = jQuery(this).offset();
+                    let left = (ui.offset.left - offset.left) / scale;
+                    let top = (ui.offset.top - offset.top) / scale;
+
+                    if (ui.draggable.attr("id") === "shape-a-tool") {
+                        const selectedLabel = jQuery("#a-selector").val();
+                        const groupId = "group-" + idCounter++;
+                        const $group = jQuery(`<div class="shape-group" id="${groupId}"></div>`)
+                            .css({ left, top, position: "absolute" })
+                            .appendTo("#canvas");
+
+                        const shapeId = "shape-a-" + idCounter++;
+                        const $shape = jQuery(`<div class="shape-a" id="${shapeId}">${selectedLabel}</div>`)
+                            .droppable({
+                                accept: ".toolbox-item[id^='shape-b-tool-']",
+                                drop: function(event, ui) {
+                                    event.stopPropagation();
+                                    const label = ui.draggable.find(".toolbox-shape-b").data("label");
+                                    const value = ui.draggable.data("value");
+
+                                    // Check if a B shape with the same label already exists
+                                    const $existingB = jQuery(this).closest(".shape-group").find(`.shape-b:contains(${label})`);
+                                    if ($existingB.length > 0) {
+                                        alert(`${label} is already dropped in this A shape.`);
+                                        return;
+                                    }
+
+                                    createShapeB($group, jQuery(this), label, value);
+                                },
+                                hoverClass: "ui-state-hover"
+                            });
+
+                        $group.append($shape);
+
+                        // Make the group draggable with proper zoom handling
+                        jsPlumbInstance.draggable($group, {
+                            containment: "parent",
+                            start: function(e, ui) {
+                                jQuery(this).data('originalLeft', ui.position.left);
+                                jQuery(this).data('originalTop', ui.position.top);
+                                jQuery(this).css('z-index', 1000);
+                            },
+                            drag: function(e, ui) {
+                                const containerOffset = jQuery("#canvas-container").offset();
+                                const mouseX = e.clientX - containerOffset.left;
+                                const mouseY = e.clientY - containerOffset.top;
+                                
+                                ui.position.left = (mouseX - (e.offsetX * scale)) / scale;
+                                ui.position.top = (mouseY - (e.offsetY * scale)) / scale;
+                                jsPlumbInstance.repaintEverything();
+                            }
+                        });
+
+                        alert(`Dropped A shape with label: ${selectedLabel}`);
+                    }
+                }
+            });
+
+            // Make all elements draggable with jsPlumb with proper zoom handling
+            jsPlumbInstance.draggable(jsPlumbInstance.getSelector(".partner-shape, .autocustomer-shape, .shape-group, .customer-shape"), {
+                containment: "parent",
+                start: function(e, ui) {
+                    jQuery(this).data('originalLeft', ui.position.left);
+                    jQuery(this).data('originalTop', ui.position.top);
+                    jQuery(this).css('z-index', 1000);
+                },
+                drag: function(e, ui) {
+                    const containerOffset = jQuery("#canvas-container").offset();
+                    const mouseX = e.clientX - containerOffset.left;
+                    const mouseY = e.clientY - containerOffset.top;
+                    
+                    ui.position.left = (mouseX - (e.offsetX * scale)) / scale;
+                    ui.position.top = (mouseY - (e.offsetY * scale)) / scale;
+                    jsPlumbInstance.repaintEverything();
+                }
+            });
+
+            // Enable zooming
+            jQuery("#zoom-in").click(function() {
+                scale += 0.1;
+                scale = Math.min(Math.max(0.5, scale), 2);
+                jQuery("#canvas").css("transform", `scale(${scale})`);
+                jsPlumbInstance.setZoom(scale);
+                jsPlumbInstance.repaintEverything();
+            });
+
+            jQuery("#zoom-out").click(function() {
+                scale -= 0.1;
+                scale = Math.min(Math.max(0.5, scale), 2);
+                jQuery("#canvas").css("transform", `scale(${scale})`);
+                jsPlumbInstance.setZoom(scale);
+                jsPlumbInstance.repaintEverything();
+            });
+
+            function getNextPosition($shapeA, existingPositions, radius) {
+                const shapeAWidth = $shapeA.width();
+                const shapeAHeight = $shapeA.height();
+                const minSpacing = 10;
+                const spacing = 2 * radius + minSpacing;
+
+                if (existingPositions.length === 0) {
+                    return {
+                        left: (shapeAWidth / 2) - radius,
+                        top: shapeAHeight - radius,
+                        side: "bottom"
+                    };
+                }
+
+                const lastPos = existingPositions[existingPositions.length - 1];
+                let newPos;
+
+                switch (lastPos.side) {
+                    case "bottom":
+                        newPos = {
+                            left: lastPos.left - spacing,
+                            top: lastPos.top,
+                            side: "bottom"
+                        };
+                        if (newPos.left < -radius) {
+                            newPos = {
+                                left: -radius,
+                                top: shapeAHeight - radius - spacing,
+                                side: "left"
+                            };
+                        }
+                        break;
+
+                    case "left":
+                        newPos = {
+                            left: lastPos.left,
+                            top: lastPos.top - spacing,
+                            side: "left"
+                        };
+                        if (newPos.top < -radius) {
+                            newPos = {
+                                left: -radius + spacing,
+                                top: -radius,
+                                side: "top"
+                            };
+                        }
+                        break;
+
+                    case "top":
+                        newPos = {
+                            left: lastPos.left + spacing,
+                            top: lastPos.top,
+                            side: "top"
+                        };
+                        if (newPos.left > shapeAWidth - radius) {
+                            newPos = {
+                                left: shapeAWidth - radius,
+                                top: -radius + spacing,
+                                side: "right"
+                            };
+                        }
+                        break;
+
+                    case "right":
+                        newPos = {
+                            left: lastPos.left,
+                            top: lastPos.top + spacing,
+                            side: "right"
+                        };
+                        if (newPos.top > shapeAHeight - radius) {
+                            let foundPosition = false;
+                            let testPos = {
+                                left: shapeAWidth - radius - spacing,
+                                top: shapeAHeight - radius,
+                                side: "bottom"
+                            };
+
+                            for (let i = 0; i < existingPositions.length; i++) {
+                                const dx = testPos.left - existingPositions[i].left;
+                                const dy = testPos.top - existingPositions[i].top;
+                                const distance = Math.sqrt(dx*dx + dy*dy);
+                                if (distance < 2 * radius + minSpacing) {
+                                    testPos.left -= spacing;
+                                    if (testPos.left < -radius) {
+                                        testPos = {
+                                            left: -radius,
+                                            top: shapeAHeight - radius - spacing,
+                                            side: "left"
+                                        };
+                                    }
+                                } else {
+                                    foundPosition = true;
+                                    break;
+                                }
+                            }
+
+                            if (foundPosition) {
+                                newPos = testPos;
+                            } else {
+                                return null;
+                            }
+                        }
+                        break;
+                }
+
+                return newPos;
+            }
+
+            function calculateOptimalRadius($shapeA, existingPositions) {
+                const minRadius = 5;
+                let currentRadius = existingPositions.length > 0 ?
+                    parseFloat(jQuery(".shape-b").first().width()) / 2 : 15;
+
+                const testPos = getNextPosition($shapeA, existingPositions, currentRadius);
+                if (testPos && canAddB($shapeA, existingPositions, currentRadius)) {
+                    return currentRadius;
+                }
+
+                let low = minRadius;
+                let high = currentRadius;
+                let bestRadius = minRadius;
+
+                while (low <= high) {
+                    const mid = (low + high) / 2;
+                    const testPos = getNextPosition($shapeA, existingPositions, mid);
+                    if (testPos && canAddB($shapeA, existingPositions, mid)) {
+                        bestRadius = mid;
+                        low = mid + 0.5;
+                    } else {
+                        high = mid - 0.5;
+                    }
+                }
+                return bestRadius;
+            }
+
+            function canAddB($shapeA, existingPositions, radius) {
+                const testPositions = [...existingPositions];
+                const newPos = getNextPosition($shapeA, testPositions, radius);
+                if (!newPos) return false;
+
+                testPositions.push(newPos);
+
+                for (let i = 0; i < testPositions.length; i++) {
+                    for (let j = i + 1; j < testPositions.length; j++) {
+                        const dx = testPositions[i].left - testPositions[j].left;
+                        const dy = testPositions[i].top - testPositions[j].top;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+
+                        if (distance < 2 * radius + 10) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            function repositionAllBs($group, $shapeA, radius) {
+                const $bs = $group.find(".shape-b");
+                const positions = [];
+
+                $bs.each(function() {
+                    const pos = getNextPosition($shapeA, positions, radius);
+                    if (pos) {
+                        positions.push(pos);
+                    }
+                });
+
+                $bs.each(function(index) {
+                    const $b = jQuery(this);
+                    const pos = positions[index];
+                    $b.css({
+                        width: `${radius * 2}px`,
+                        height: `${radius * 2}px`,
+                        left: `${pos.left}px`,
+                        top: `${pos.top}px`
+                    }).data("side", pos.side);
+                });
+            }
+
+            function createShapeB($group, $shapeA, label, value) {
+                const existingPositions = [];
+                $group.find(".shape-b").each(function() {
+                    existingPositions.push({
+                        left: parseFloat(jQuery(this).css("left")),
+                        top: parseFloat(jQuery(this).css("top")),
+                        side: jQuery(this).data("side")
+                    });
+                });
+
+                const radius = calculateOptimalRadius($shapeA, existingPositions);
+                const newPos = getNextPosition($shapeA, existingPositions, radius);
+
+                if (!newPos) {
+                    alert("No more space available to place another B shape");
+                    return;
+                }
+
+                jQuery(`<div class="shape-b" id="shape-b-${idCounter++}" data-value="${value}">${label}</div>`)
+                    .css({
+                        width: `${radius * 2}px`,
+                        height: `${radius * 2}px`,
+                        left: `${newPos.left}px`,
+                        top: `${newPos.top}px`
+                    })
+                    .data("side", newPos.side)
+                    .appendTo($group);
+
+                repositionAllBs($group, $shapeA, radius);
+
+                console.log(`Shape B with label ${label} and value ${value} created.`);
+            }
+        });
+    </script>
+</body>
+</html>
